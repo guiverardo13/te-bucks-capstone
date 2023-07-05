@@ -42,7 +42,7 @@ public class JdbcTransferDao implements TransferDao {
                      "FROM users " +
                      "JOIN transfer on user_id =  ";
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId);
             while (results.next()) {
                 transfer = mapRowToTransfer(results);
             }
