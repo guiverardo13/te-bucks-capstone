@@ -20,36 +20,41 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfers() {
-        List<Transfer> transferList = new ArrayList<>();
-        String sql = "SELECT transfer_id, transfer_type, from_user_id, to_user_id, amount, transfer_status FROM transfer";
-        try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
-            while (results.next()) {
-                Transfer transfer = mapRowToTransfer(results);
-                transferList.add(transfer);
-            }
-        } catch (CannotGetJdbcConnectionException e) {
-            throw new DaoException("Unable to connect to server or database", e);
-        }
-        return transferList;
-    }
-
-    @Override
-    public Transfer getTransfersById(int userId) {
+    public Transfer getTransferByTransferId(int transferId) {
         Transfer transfer = null;
-        String sql = "SELECT first_name, amount, transfer_id, " +
-                     "FROM users " +
-                     "JOIN transfer on user_id =  ";
+        String sql = "SELECT transfer_id, transfer_type, from_user_id, to_user_id, amount, transfer_status FROM transfer" +
+                "where transfer_id = ?;";
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId);
-            while (results.next()) {
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transferId);
+            if (results.next()) {
                 transfer = mapRowToTransfer(results);
             }
         } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         }
         return transfer;
+    }
+
+    @Override
+    public List <Transfer> getTransfersByUserId(int userId) {
+        List <Transfer> transferList = new ArrayList<>();
+        String sql = "Select users.first_name as from_user, to_user.first_name as to_user, " +
+                "amount, transfer_id, transfer_status " +
+                "from transfer " +
+                "join users as from_users on user_id = from_user_id " +
+                "join users as to_users on user_id = to_user_id " +
+                "where from_user_id = ? or to_user_id = ? " +
+                "order by transfer_id;";
+
+        try {
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId);
+            while (results.next()) {
+                 transferList.add(mapRowToTransfer(results));
+            }
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        }
+        return transferList;
     }
 
     private Transfer mapRowToTransfer(SqlRowSet rs) {

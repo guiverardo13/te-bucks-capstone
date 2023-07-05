@@ -6,12 +6,12 @@ import java.util.List;
 
 public interface TransferDao {
 
-    List<Transfer> getTransfers();
+    Transfer getTransferByTransferId(int transferId);
 
-    Transfer getTransfersById(int transferId);
+    List<Transfer> getTransfersByUserId(int userId);
 
-    // TransferStatusUpdateDto
+    // List<Transfer> get TransfersByStatus(String transferStatus);  ??
 
-    // 	NewTransferDto
+
 
 }
