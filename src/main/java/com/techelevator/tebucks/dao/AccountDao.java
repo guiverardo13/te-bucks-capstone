@@ -4,5 +4,7 @@ import com.techelevator.tebucks.model.Account;
 
 public interface AccountDao {
 
-    Account getBalance(int userId);
+    Account getAccount(int userId);
+
+
 }
