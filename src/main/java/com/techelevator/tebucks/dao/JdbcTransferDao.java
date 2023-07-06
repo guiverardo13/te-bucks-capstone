@@ -1,7 +1,6 @@
 package com.techelevator.tebucks.dao;
 
 import com.techelevator.tebucks.exception.DaoException;
-import com.techelevator.tebucks.model.Account;
 import com.techelevator.tebucks.model.Transfer;
 import com.techelevator.tebucks.model.TransferDTO;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -9,8 +8,6 @@ import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +25,7 @@ public class JdbcTransferDao implements TransferDao {
     public Transfer getTransferByTransferId(int transferId) {
         Transfer transfer = null;
         String sql = "SELECT transfer_id, transfer_type, from_user_id, to_user_id, amount, transfer_status FROM transfer" +
-                "where transfer_id = ?;";
+                     "WHERE transfer_id = ?;";
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transferId);
             if (results.next()) {
@@ -64,7 +61,7 @@ public class JdbcTransferDao implements TransferDao {
 
     @Override
     public Transfer updateTransferStatus (Transfer transferToUpdate, String status) {
-        Transfer updatedTransfer = new Transfer();
+        Transfer updatedTransfer;
 
 
         String sql = "Update transfer set transfer_status = ?" +
@@ -111,14 +108,13 @@ public class JdbcTransferDao implements TransferDao {
             if (!sufficientFunds && newTransferDTO.getTransferType().equals("Send")) {
                 newTransfer.setStatus("Rejected");
 
-
             } else if (newTransferDTO.getTransferType().equals("Send")) {
                 newTransfer.setStatus("Approved");
+
             } else if (newTransferDTO.getTransferType().equals("Request")) {
                 newTransfer.setStatus("Pending");
             }
 
-           Transfer newCreatedTransfer = new Transfer();
            Integer newTransferId = jdbcTemplate.queryForObject(sql, int.class, newTransfer.getTransferType(), newTransfer.getFromUserId(),
                     newTransfer.getToUserId(), newTransfer.getTransferAmount(), newTransfer.getStatus());
 
