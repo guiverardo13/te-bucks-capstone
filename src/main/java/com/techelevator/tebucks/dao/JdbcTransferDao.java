@@ -71,9 +71,9 @@ public class JdbcTransferDao implements TransferDao {
                 "where transfer_id = ?;";
 
         try {
-            int rowsupdated = jdbcTemplate.update(sql, status, transferToUpdate.getTransferId());
+            int rowsUpdated = jdbcTemplate.update(sql, status, transferToUpdate.getTransferId());
 
-            if (rowsupdated == 0) {
+            if (rowsUpdated == 0) {
                 throw new DaoException("Unable to update Transfer Status.");
             }
             updatedTransfer = getTransferByTransferId(transferToUpdate.getTransferId());
@@ -133,9 +133,8 @@ public class JdbcTransferDao implements TransferDao {
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Unable to create new Transfer", e);
         }
-
-
     }
+
 
     private Transfer mapRowToTransfer(SqlRowSet rs) {
         Transfer transfer = new Transfer();
