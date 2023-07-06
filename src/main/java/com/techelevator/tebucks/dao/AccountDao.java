@@ -6,5 +6,6 @@ public interface AccountDao {
 
     Account getAccount(int userId);
 
+    double getBalance(int userId);
 
 }

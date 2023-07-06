@@ -5,7 +5,6 @@ import com.techelevator.tebucks.model.Account;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -38,5 +37,22 @@ public class JdbcAccountDao implements AccountDao{
         }
     }
 
- 
+    @Override
+    public double getBalance(int userId){
+        Double balance;
+        String sql = "select balance from account where user_id = ?;";
+
+        try {
+            balance = jdbcTemplate.queryForObject(sql, double.class, userId);
+
+            if(balance == null) {
+                throw new DaoException("Unable to get balance");
+            }
+            return balance;
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
+    }
 }

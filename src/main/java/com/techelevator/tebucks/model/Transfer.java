@@ -27,11 +27,6 @@ public class Transfer {
     private boolean validTransfer(){
         return fromUserId != toUserId;
     }
-
-    @AssertTrue
-    private boolean sufficientFunds(){
-        return transferAmount <= getBalance(fromUserId) && transferAmount > 0;
-    }
     @AssertTrue
     private boolean validStatus(){
         return status.equals("Pending") || status.equals("Approved") || status.equals("Rejected");
