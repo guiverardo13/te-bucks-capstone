@@ -1,5 +1,6 @@
 package com.techelevator.tebucks.controllers;
 
+import com.techelevator.tebucks.dao.JdbcAccountDao;
 import com.techelevator.tebucks.dao.JdbcTransferDao;
 import com.techelevator.tebucks.dao.JdbcUserDao;
 import com.techelevator.tebucks.model.Transfer;
@@ -11,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
 import javax.validation.Valid;
 import java.security.Principal;
 import java.util.List;
@@ -26,6 +26,8 @@ public class TransferController {
     private JdbcTransferDao transferDao;
     @Autowired
     private JdbcUserDao userDao;
+    @Autowired
+    private JdbcAccountDao accountDao;
 
 
     @RequestMapping(path = "/account/transfers", method = RequestMethod.GET)
@@ -36,12 +38,10 @@ public class TransferController {
         if(user == null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
-        if(user.getUserName() != username){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot perform another user's transactions");
-        }
         return transferDao.getTransfersByUserId(user.getUserId());
     }
-    @RequestMapping(path = "/transfers/{id}", method = RequestMethod.GET)
+
+    @RequestMapping(path = "/transfers/{transferId}", method = RequestMethod.GET)
     public Transfer getTransferById(@PathVariable int transferId){
         Transfer transfer = transferDao.getTransferByTransferId(transferId);
 
@@ -66,13 +66,17 @@ public class TransferController {
         return transferDao.createTransfer(transferDTO);
     }
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @RequestMapping(path = "/transfers/{id}/status", method = RequestMethod.PUT)
+    @RequestMapping(path = "/transfers/{transferId}/status", method = RequestMethod.PUT)
     public Transfer updateTransfer(@RequestBody @Valid UpdateTransferStatusDTO updateDTO, @PathVariable int transferId, Principal principal){
         String username = principal.getName();
         User userLoggedIn = userDao.getUserByUsername(username);
         Transfer transferToUpdate = getTransferById(transferId);
 
-        if(transferToUpdate.getFromUserId() != userLoggedIn.getUserId()){
+        double balance = accountDao.getBalance(transferToUpdate.getFromUserId());
+        boolean sufficientFunds = balance >= transferToUpdate.getTransferAmount();
+        boolean isAuthorized = transferToUpdate.getFromUserId() == userLoggedIn.getUserId();
+
+        if(!sufficientFunds || !isAuthorized){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized!");
         }
         return transferDao.updateTransferStatus(transferToUpdate, updateDTO.getTransferStatus());
