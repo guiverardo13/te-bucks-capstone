@@ -1,12 +1,16 @@
 package com.techelevator.tebucks.dao;
 
 import com.techelevator.tebucks.exception.DaoException;
+import com.techelevator.tebucks.model.Account;
 import com.techelevator.tebucks.model.Transfer;
+import com.techelevator.tebucks.model.TransferDTO;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
+import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +18,7 @@ import java.util.List;
 public class JdbcTransferDao implements TransferDao {
 
     private final JdbcTemplate jdbcTemplate;
+
 
     public JdbcTransferDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -55,6 +60,81 @@ public class JdbcTransferDao implements TransferDao {
             throw new DaoException("Unable to connect to server or database", e);
         }
         return transferList;
+    }
+
+    @Override
+    public Transfer updateTransferStatus (Transfer transferToUpdate, String status) {
+        Transfer updatedTransfer = new Transfer();
+
+
+        String sql = "Update transfer set transfer_status = ?" +
+                "where transfer_id = ?;";
+
+        try {
+            int rowsupdated = jdbcTemplate.update(sql, status, transferToUpdate.getTransferId());
+
+            if (rowsupdated == 0) {
+                throw new DaoException("Unable to update Transfer Status.");
+            }
+            updatedTransfer = getTransferByTransferId(transferToUpdate.getTransferId());
+
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
+
+        return updatedTransfer;
+    }
+
+    @Override
+    public Transfer createTransfer (TransferDTO newTransferDTO) {
+
+        Transfer newTransfer = new Transfer();
+        newTransfer.setTransferType(newTransferDTO.getTransferType());
+        newTransfer.setFromUserId(newTransferDTO.getUserFrom());
+        newTransfer.setToUserId(newTransferDTO.getUserTo());
+        newTransfer.setTransferAmount(newTransferDTO.getAmount());
+
+        String sqlBalanceCheck = "select balance from account where user_id = ?;";
+        String sql = "Insert into transfer (transfer_type, from_user_id, to_user_id, " +
+                "amount, transfer_status) " +
+                "values (?, ?, ?, ?, ?) returning transfer_id;";
+
+
+        try {
+
+            Double balance = jdbcTemplate.queryForObject(sqlBalanceCheck, double.class, newTransferDTO.getUserFrom());
+
+            boolean sufficientFunds = balance >= newTransferDTO.getAmount();
+
+            if (!sufficientFunds && newTransferDTO.getTransferType().equals("Send")) {
+                newTransfer.setStatus("Rejected");
+
+
+            } else if (newTransferDTO.getTransferType().equals("Send")) {
+                newTransfer.setStatus("Approved");
+            } else if (newTransferDTO.getTransferType().equals("Request")) {
+                newTransfer.setStatus("Pending");
+            }
+
+           Transfer newCreatedTransfer = new Transfer();
+           Integer newTransferId = jdbcTemplate.queryForObject(sql, int.class, newTransfer.getTransferType(), newTransfer.getFromUserId(),
+                    newTransfer.getToUserId(), newTransfer.getTransferAmount(), newTransfer.getStatus());
+
+           if (newTransferId == null) {
+               throw new DaoException("Unable to create new Transfer");
+           }
+
+           return getTransferByTransferId(newTransferId);
+
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Cannot connect to database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Unable to create new Transfer", e);
+        }
+
+
     }
 
     private Transfer mapRowToTransfer(SqlRowSet rs) {

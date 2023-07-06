@@ -17,10 +17,17 @@ public class JdbcAccountDao implements AccountDao{
     }
 
     @Override
-    public Account getBalance(int userId) {
-        Account account = null;
-        String sql = "SELECT user_id, balance FROM account;";
+    public Account getAccount(int userId) {
+        Account account;
+        String sql = "SELECT user_id, balance FROM account where user_id =?;";
+
         try {
+           account = jdbcTemplate.queryForObject(sql, Account.class, userId);
+
+           if (account == null) {
+               throw new DaoException("Unable to get balance");
+           }
+           return account;
 
 
         } catch (CannotGetJdbcConnectionException e) {
@@ -29,6 +36,7 @@ public class JdbcAccountDao implements AccountDao{
             throw new DaoException("Data integrity violation", e);
 
         }
-        return null;
     }
+
+ 
 }
