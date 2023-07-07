@@ -2,7 +2,6 @@ package com.techelevator.tebucks.controllers;
 
 import com.techelevator.tebucks.dao.JdbcAccountDao;
 import com.techelevator.tebucks.dao.JdbcTransferDao;
-import com.techelevator.tebucks.dao.JdbcUsersDao;
 import com.techelevator.tebucks.model.Transfer;
 import com.techelevator.tebucks.model.TransferDTO;
 import com.techelevator.tebucks.model.UpdateTransferStatusDTO;
@@ -40,7 +39,7 @@ public class TransferController {
         if(users == null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
-        return transferDao.getTransfersByUserId(users.getId());
+        return transferDao.getTransfersByUserId(users.getId(), principal);
     }
 
     @RequestMapping(path = "/transfers/{transferId}", method = RequestMethod.GET)
@@ -59,14 +58,18 @@ public class TransferController {
         String username = principal.getName();
         User usersLoggedIn = userDao.getUserByUsername(username);
 
-        boolean validTransferCreation = usersLoggedIn.getId() == transferDTO.getUserFrom() || usersLoggedIn.getId() == transferDTO.getUserTo();
-
-        if(!validTransferCreation){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized!");
+        if (transferDTO.getTransferType().equals("Request")) {
+            transferDTO.setUserTo(usersLoggedIn.getId());
+        } else {
+            transferDTO.setUserFrom(usersLoggedIn.getId());
         }
+
+
 
         return transferDao.createTransfer(transferDTO);
     }
+
+
     @ResponseStatus(HttpStatus.ACCEPTED)
     @RequestMapping(path = "/transfers/{transferId}/status", method = RequestMethod.PUT)
     public Transfer updateTransfer(@RequestBody @Valid UpdateTransferStatusDTO updateDTO, @PathVariable int transferId, Principal principal){
@@ -75,10 +78,13 @@ public class TransferController {
         Transfer transferToUpdate = getTransferById(transferId);
 
         double balance = accountDao.getBalance(transferToUpdate.getFromUserId());
+
         boolean sufficientFunds = balance >= transferToUpdate.getTransferAmount();
         boolean isAuthorized = transferToUpdate.getFromUserId() == usersLoggedIn.getId();
+        boolean isRequest = transferToUpdate.getTransferType().equals("Request");
+        boolean isPending = transferToUpdate.getStatus().endsWith("Pending");
 
-        if(!sufficientFunds || !isAuthorized){
+        if(!sufficientFunds || !isAuthorized || !isRequest || !isPending){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized!");
         }
         return transferDao.updateTransferStatus(transferToUpdate, updateDTO.getTransferStatus());

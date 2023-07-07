@@ -1,9 +1,9 @@
 package com.techelevator.tebucks.controllers;
 
 import com.techelevator.tebucks.dao.JdbcAccountDao;
-import com.techelevator.tebucks.dao.JdbcUsersDao;
+
 import com.techelevator.tebucks.model.Account;
-import com.techelevator.tebucks.model.Users;
+
 import com.techelevator.tebucks.security.dao.JdbcUserDao;
 import com.techelevator.tebucks.security.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +28,8 @@ public class AccountController {
         String username = principal.getName();
         User usersLoggedIn = userDao.getUserByUsername(username);
 
-        return accountDao.getAccount(usersLoggedIn.getId());
+
+        return accountDao.getAccount(userLoggedIn.getId());
     }
-
-
 }
 
