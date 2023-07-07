@@ -2,11 +2,13 @@ package com.techelevator.tebucks.controllers;
 
 import com.techelevator.tebucks.dao.JdbcAccountDao;
 import com.techelevator.tebucks.dao.JdbcTransferDao;
-import com.techelevator.tebucks.dao.JdbcUserDao;
+
 import com.techelevator.tebucks.model.Transfer;
 import com.techelevator.tebucks.model.TransferDTO;
 import com.techelevator.tebucks.model.UpdateTransferStatusDTO;
-import com.techelevator.tebucks.model.User;
+import com.techelevator.tebucks.model.Users;
+import com.techelevator.tebucks.security.dao.JdbcUserDao;
+import com.techelevator.tebucks.security.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,12 +35,12 @@ public class TransferController {
     @RequestMapping(path = "/account/transfers", method = RequestMethod.GET)
     public List<Transfer> getTransfersById(Principal principal){
         String username = principal.getName();
-        User user = userDao.getUserByUsername(username);
+        User users = userDao.getUserByUsername(username);
 
-        if(user == null){
+        if(users == null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
-        return transferDao.getTransfersByUserId(user.getUserId());
+        return transferDao.getTransfersByUserId(users.getId(), principal);
     }
 
     @RequestMapping(path = "/transfers/{transferId}", method = RequestMethod.GET)
@@ -55,28 +57,35 @@ public class TransferController {
     @RequestMapping(path = "/transfers", method = RequestMethod.POST)
     public Transfer createTransfer(@RequestBody @Valid TransferDTO transferDTO, Principal principal){
         String username = principal.getName();
-        User userLoggedIn = userDao.getUserByUsername(username);
+        User usersLoggedIn = userDao.getUserByUsername(username);
 
-        boolean validTransferCreation = userLoggedIn.getUserId() == transferDTO.getUserFrom() || userLoggedIn.getUserId() == transferDTO.getUserTo();
-
-        if(!validTransferCreation){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized!");
+        if (transferDTO.getTransferType().equals("Request")) {
+            transferDTO.setUserTo(usersLoggedIn.getId());
+        } else {
+            transferDTO.setUserFrom(usersLoggedIn.getId());
         }
+
+
 
         return transferDao.createTransfer(transferDTO);
     }
+
+
     @ResponseStatus(HttpStatus.ACCEPTED)
     @RequestMapping(path = "/transfers/{transferId}/status", method = RequestMethod.PUT)
     public Transfer updateTransfer(@RequestBody @Valid UpdateTransferStatusDTO updateDTO, @PathVariable int transferId, Principal principal){
         String username = principal.getName();
-        User userLoggedIn = userDao.getUserByUsername(username);
+        User usersLoggedIn = userDao.getUserByUsername(username);
         Transfer transferToUpdate = getTransferById(transferId);
 
         double balance = accountDao.getBalance(transferToUpdate.getFromUserId());
-        boolean sufficientFunds = balance >= transferToUpdate.getTransferAmount();
-        boolean isAuthorized = transferToUpdate.getFromUserId() == userLoggedIn.getUserId();
 
-        if(!sufficientFunds || !isAuthorized){
+        boolean sufficientFunds = balance >= transferToUpdate.getTransferAmount();
+        boolean isAuthorized = transferToUpdate.getFromUserId() == usersLoggedIn.getId();
+        boolean isRequest = transferToUpdate.getTransferType().equals("Request");
+        boolean isPending = transferToUpdate.getStatus().endsWith("Pending");
+
+        if(!sufficientFunds || !isAuthorized || !isRequest || !isPending){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized!");
         }
         return transferDao.updateTransferStatus(transferToUpdate, updateDTO.getTransferStatus());

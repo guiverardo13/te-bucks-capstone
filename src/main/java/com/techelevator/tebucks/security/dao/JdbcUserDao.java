@@ -7,8 +7,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class JdbcUserDao implements UserDao {
@@ -17,6 +22,27 @@ public class JdbcUserDao implements UserDao {
 
     public JdbcUserDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+
+    @Override
+    public List<User> getUsers(Principal principal) {
+        List<User> userList = new ArrayList<>();
+        String sql = "SELECT user_id, username, password_hash, first_name, last_name, email, role " +
+                "FROM users " +
+                "ORDER BY first_name;";
+        try {
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+            while (results.next()) {
+                User users = mapRowToUser(results);
+                if (!users.getUsername().equals(principal.getName())) {
+                    userList.add(users);
+                }
+            }
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        }
+        return userList;
     }
 
     public User getUserById(int userId) {
@@ -49,11 +75,15 @@ public class JdbcUserDao implements UserDao {
         return user;
     }
 
+
+
     @Override
     public User createUser(RegisterUserDto user) {
         // create user
         String sql = "INSERT INTO users (username, password_hash, first_name, last_name, email) VALUES (?, ?, ?, ?, ?) RETURNING user_id";
+        String sqlSetInitialBalance = "Insert into account (user_id, balance) values (?, ?);";
         String passwordHash = new BCryptPasswordEncoder().encode(user.getPassword());
+
         try {
             Integer newUserId = jdbcTemplate.queryForObject(sql, int.class,
                     user.getUsername(),
@@ -61,7 +91,8 @@ public class JdbcUserDao implements UserDao {
                     user.getFirstName(),
                     user.getLastName(),
                     user.getEmail());
-
+            jdbcTemplate.update(sqlSetInitialBalance, newUserId, 1000.00);
+            //setInitialBalance(newUserId);
             if (newUserId == null) {
                 throw new DaoException("Could not create user");
             }

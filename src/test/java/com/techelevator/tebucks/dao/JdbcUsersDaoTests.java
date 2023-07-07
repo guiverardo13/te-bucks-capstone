@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class JdbcUserDaoTests extends BaseDaoTests {
+public class JdbcUsersDaoTests extends BaseDaoTests {
     protected static final User USER_1 = new User(1, "user1", "user1", "ROLE_USER", true);
     protected static final User USER_2 = new User(2, "user2", "user2", "ROLE_USER", true);
     private static final User USER_3 = new User(3, "user3", "user3", "ROLE_USER", true);
