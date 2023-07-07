@@ -2,7 +2,7 @@ package com.techelevator.tebucks.model;
 
 import javax.validation.constraints.NotNull;
 
-public class User {
+public class Users {
 
     @NotNull
     private int userId;
@@ -19,10 +19,10 @@ public class User {
     public String fullName(){
         return firstName + " " + lastName;
     }
-    public User(){
+    public Users(){
 
     }
-    public User(int userId, String userName, String passwordHash, Account userAccount, String firstName, String lastName, String email, String role) {
+    public Users(int userId, String userName, String passwordHash, Account userAccount, String firstName, String lastName, String email, String role) {
         this.userId = userId;
         this.userName = userName;
         this.passwordHash = passwordHash;

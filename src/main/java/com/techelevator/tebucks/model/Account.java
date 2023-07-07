@@ -9,7 +9,7 @@ public class Account {
     private int userId;
     @NotNull
     @Positive
-    private double balance = 1000;
+    private double balance;
 
     public Account(){
 
@@ -26,5 +26,9 @@ public class Account {
     }
     public void setUserId(int userId) {
         this.userId = userId;
+    }
+
+    public void setBalance (double balance) {
+        this.balance = balance;
     }
 }

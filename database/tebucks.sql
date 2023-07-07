@@ -37,7 +37,7 @@ CREATE TABLE account (
 	CONSTRAINT pk_user_id PRIMARY KEY (user_id),
 	CONSTRAINT fk_user_id FOREIGN KEY (user_id) references users(user_id)
 
-)
+);
 
 
 COMMIT TRANSACTION;
