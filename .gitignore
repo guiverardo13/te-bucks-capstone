@@ -7,7 +7,7 @@ Thumbs.db
 *.obj
 *.exe
 *.pdb
-*.user
+*.users
 *.aps
 *.pch
 *.vspscc
@@ -52,7 +52,7 @@ target/
 obj/
 bin/
 .vs/
-*.user
+*.users
 
 # local env files
 .env.local

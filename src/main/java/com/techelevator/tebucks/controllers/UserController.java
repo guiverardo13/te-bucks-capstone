@@ -1,7 +1,9 @@
 package com.techelevator.tebucks.controllers;
 
-import com.techelevator.tebucks.dao.JdbcUserDao;
-import com.techelevator.tebucks.model.User;
+import com.techelevator.tebucks.dao.JdbcUsersDao;
+import com.techelevator.tebucks.model.Users;
+import com.techelevator.tebucks.security.dao.JdbcUserDao;
+import com.techelevator.tebucks.security.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;

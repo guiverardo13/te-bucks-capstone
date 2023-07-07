@@ -40,13 +40,13 @@ public class JdbcTransferDao implements TransferDao {
     @Override
     public List <Transfer> getTransfersByUserId(int userId) {
         List <Transfer> transferList = new ArrayList<>();
-        String sql = "Select users.first_name as from_user, to_user.first_name as to_user, " +
-                "amount, transfer_id, transfer_status " +
-                "from transfer " +
-                "join users as from_users on user_id = from_user_id " +
-                "join users as to_users on user_id = to_user_id " +
-                "where from_user_id = ? or to_user_id = ? " +
-                "order by transfer_id;";
+        String sql = "SELECT users.first_name AS from_user, to_user.first_name AS to_user, " +
+                     "amount, transfer_id, transfer_status " +
+                     "FROM transfer " +
+                     "JOIN users as from_users on user_id = from_user_id " +
+                     "JOIN users as to_users on user_id = to_user_id " +
+                     "WHERE from_user_id = ? or to_user_id = ? " +
+                     "ORDER BY transfer_id;";
 
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId);
@@ -64,8 +64,9 @@ public class JdbcTransferDao implements TransferDao {
         Transfer updatedTransfer;
 
 
-        String sql = "Update transfer set transfer_status = ?" +
-                "where transfer_id = ?;";
+        String sql = "UPDATE transfer " +
+                     "SET transfer_status = ? " +
+                     "WHERE transfer_id = ?;";
 
         try {
             int rowsUpdated = jdbcTemplate.update(sql, status, transferToUpdate.getTransferId());
