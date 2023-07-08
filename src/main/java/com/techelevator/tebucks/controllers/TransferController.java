@@ -3,6 +3,7 @@ package com.techelevator.tebucks.controllers;
 import com.techelevator.tebucks.dao.JdbcAccountDao;
 import com.techelevator.tebucks.dao.JdbcTransferDao;
 
+import com.techelevator.tebucks.exception.DaoException;
 import com.techelevator.tebucks.model.Transfer;
 import com.techelevator.tebucks.model.TransferDTO;
 import com.techelevator.tebucks.model.UpdateTransferStatusDTO;
@@ -54,15 +55,23 @@ public class TransferController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(path = "/transfers", method = RequestMethod.POST)
+
     public Transfer createTransfer(@RequestBody @Valid TransferDTO transferDTO, Principal principal){
         String username = principal.getName();
         User usersLoggedIn = userDao.getUserByUsername(username);
+
+        if (transferDTO.getAmount() <= 0){
+            throw new DaoException("Unable to transfer the selected amount.");
+        }
 
         if (transferDTO.getTransferType().equals("Request")) {
             transferDTO.setUserTo(usersLoggedIn.getId());
         } else {
             transferDTO.setUserFrom(usersLoggedIn.getId());
         }
+
+
+
 
 
 
