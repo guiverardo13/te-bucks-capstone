@@ -70,24 +70,32 @@ public class TransferController {
     }
 
 
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    @RequestMapping(path = "/transfers/{transferId}/status", method = RequestMethod.PUT)
-    public Transfer updateTransfer(@RequestBody @Valid UpdateTransferStatusDTO updateDTO, @PathVariable int transferId, Principal principal){
+    //@ResponseStatus(HttpStatus.ACCEPTED)
+    @RequestMapping(path = "/transfers/{id}/status", method = RequestMethod.PUT)
+    public Transfer updateTransfer(@RequestBody  UpdateTransferStatusDTO updateDTO, @PathVariable int id, Principal principal){
         String username = principal.getName();
         User usersLoggedIn = userDao.getUserByUsername(username);
-        Transfer transferToUpdate = getTransferById(transferId);
+        Transfer transferToUpdate = getTransferById(id);
 
         double balance = accountDao.getBalance(transferToUpdate.getFromUserId());
+
+
+
 
         boolean sufficientFunds = balance >= transferToUpdate.getAmount();
         boolean isAuthorized = transferToUpdate.getFromUserId() == usersLoggedIn.getId();
         boolean isRequest = transferToUpdate.getTransferType().equals("Request");
         boolean isPending = transferToUpdate.getTransferStatus().endsWith("Pending");
 
+        if(isAuthorized && isRequest && updateDTO.gettransferStatus().equals("Rejected")){
+            return transferDao.updateTransferStatus(transferToUpdate,"Rejected");
+        }
+
+
         if(!sufficientFunds || !isAuthorized || !isRequest || !isPending){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized!");
         }
-        return transferDao.updateTransferStatus(transferToUpdate, updateDTO.getTransferStatus());
+        return transferDao.updateTransferStatus(transferToUpdate, updateDTO.gettransferStatus());
     }
 
 

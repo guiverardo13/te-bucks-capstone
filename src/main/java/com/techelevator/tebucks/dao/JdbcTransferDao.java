@@ -74,7 +74,7 @@ public class JdbcTransferDao implements TransferDao {
         Transfer updatedTransfer;
 
 
-        String sql = "Update transfer set transfer_status = ?" +
+        String sql = "Update transfer set transfer_status = ? " +
                 "where transfer_id = ?;";
 
         try {
@@ -91,8 +91,10 @@ public class JdbcTransferDao implements TransferDao {
             throw new DaoException("Data integrity violation", e);
         }
 
+        if (updatedTransfer.getTransferStatus().equals("Approved")) {
+            accountDao.updateBalances(transferToUpdate);
+        }
 
-        accountDao.updateBalances(transferToUpdate);
         return updatedTransfer;
     }
 
@@ -117,13 +119,15 @@ public class JdbcTransferDao implements TransferDao {
 
 
         try {
+            Double balance = jdbcTemplate.queryForObject(sqlBalanceCheck, double.class, newTransferDTO.getUserFrom());
+            boolean sufficientFunds = balance >= newTransferDTO.getAmount();
 
 
              if (newTransferDTO.getTransferType().equals("Send")) {
-                Double balance = jdbcTemplate.queryForObject(sqlBalanceCheck, double.class, newTransferDTO.getUserFrom());
-                boolean sufficientFunds = balance >= newTransferDTO.getAmount();
+
                  if (!sufficientFunds) {
                      newTransfer.setTransferStatus("Rejected");
+
 
                  } else {
                      newTransfer.setTransferStatus("Approved");

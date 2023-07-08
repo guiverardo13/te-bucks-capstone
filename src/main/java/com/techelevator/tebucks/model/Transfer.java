@@ -1,6 +1,7 @@
 package com.techelevator.tebucks.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.techelevator.tebucks.security.model.User;
 
@@ -26,6 +27,7 @@ public class Transfer {
     @NotNull
     private String transferStatus;
 
+    @JsonIgnore
     public int getFromUserId () {
         if ( userFrom == null) {
             return 0;
@@ -34,7 +36,7 @@ public class Transfer {
         }
 
     }
-
+    @JsonIgnore
     public int getToUserId () {
         if (userTo == null) {
             return 0;
@@ -76,11 +78,11 @@ public class Transfer {
         return transferType;
     }
 
-    public User getFromUser() {
+    public User getUserFrom() {
         return userFrom;
     }
 
-    public User getToUser() {
+    public User getUserTo() {
         return userTo;
     }
 
