@@ -55,8 +55,7 @@ public class JdbcTransferDao implements TransferDao {
 
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
-            //String principalName = principal.getName();
-            //User user = userDao.getUserByUsername(principalName);
+
             while (results.next()) {
 
                 if (userId == results.getInt("from_user") || userId == results.getInt("to_user")) {
@@ -126,7 +125,8 @@ public class JdbcTransferDao implements TransferDao {
              if (newTransferDTO.getTransferType().equals("Send")) {
 
                  if (!sufficientFunds) {
-                     newTransfer.setTransferStatus("Rejected");
+                     //newTransfer.setTransferStatus("Rejected");
+                     throw new DaoException("Insufficient Funds.");
 
 
                  } else {
