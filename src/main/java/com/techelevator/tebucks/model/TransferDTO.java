@@ -1,5 +1,7 @@
 package com.techelevator.tebucks.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;

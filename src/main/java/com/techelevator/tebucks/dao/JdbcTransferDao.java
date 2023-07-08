@@ -1,12 +1,9 @@
 package com.techelevator.tebucks.dao;
 
 import com.techelevator.tebucks.exception.DaoException;
-import com.techelevator.tebucks.model.Account;
 import com.techelevator.tebucks.model.Transfer;
 import com.techelevator.tebucks.model.TransferDTO;
-import com.techelevator.tebucks.model.UpdateTransferStatusDTO;
 import com.techelevator.tebucks.security.dao.JdbcUserDao;
-import com.techelevator.tebucks.security.dao.UserDao;
 import com.techelevator.tebucks.security.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,7 +12,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +31,7 @@ public class JdbcTransferDao implements TransferDao {
     @Override
     public Transfer getTransferByTransferId(int transferId) {
         Transfer transfer = null;
-        String sql = "SELECT transfer_id, transfer_type, from_user_id, to_user_id, amount, transfer_status FROM transfer " +
+        String sql = "SELECT transfer_id, transfer_type, from_user_id as from_user, to_user_id as to_user, amount, transfer_status FROM transfer " +
                      "WHERE transfer_id = ?;";
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transferId);
@@ -49,9 +45,9 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List <Transfer> getTransfersByUserId(int userId, Principal principal) {
+    public List <Transfer> getTransfers(int userId) {
         List <Transfer> transferList = new ArrayList<>();
-        String sql = "Select transfer_id, from_users.first_name as from_user, to_users.first_name as to_user, amount, transfer_status\n" +
+        String sql = "Select transfer_id, transfer_type, from_users.user_id as from_user, to_users.user_id as to_user, amount, transfer_status\n" +
                 "from transfer\n" +
                 "join users as from_users on from_user_id = from_users.user_id\n" +
                 "join users as to_users on to_user_id = to_users.user_id\n" +
@@ -59,11 +55,11 @@ public class JdbcTransferDao implements TransferDao {
 
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
-            String principalName = principal.getName();
-            User user = userDao.getUserByUsername(principalName);
+            //String principalName = principal.getName();
+            //User user = userDao.getUserByUsername(principalName);
             while (results.next()) {
 
-                if (user.getId() == results.getInt("from_user") || user.getId() == results.getInt("to_user")) {
+                if (userId == results.getInt("from_user") || userId == results.getInt("to_user")) {
                     transferList.add(mapRowToTransfer(results));
                 }
             }
@@ -78,7 +74,7 @@ public class JdbcTransferDao implements TransferDao {
         Transfer updatedTransfer;
 
 
-        String sql = "Update transfer set transfer_status = ?" +
+        String sql = "Update transfer set transfer_status = ? " +
                 "where transfer_id = ?;";
 
         try {
@@ -95,8 +91,10 @@ public class JdbcTransferDao implements TransferDao {
             throw new DaoException("Data integrity violation", e);
         }
 
-        //add money / subtract money method
-        accountDao.updateBalances(transferToUpdate);
+        if (updatedTransfer.getTransferStatus().equals("Approved")) {
+            accountDao.updateBalances(transferToUpdate);
+        }
+
         return updatedTransfer;
     }
 
@@ -104,11 +102,15 @@ public class JdbcTransferDao implements TransferDao {
     @Override
     public Transfer createTransfer (TransferDTO newTransferDTO) {
 
+        User fromUser = userDao.getUserById(newTransferDTO.getUserFrom());
+        User toUser = userDao.getUserById(newTransferDTO.getUserTo());
+
+
         Transfer newTransfer = new Transfer();
         newTransfer.setTransferType(newTransferDTO.getTransferType());
-        newTransfer.setFromUserId(newTransferDTO.getUserFrom());
-        newTransfer.setToUserId(newTransferDTO.getUserTo());
-        newTransfer.setTransferAmount(newTransferDTO.getAmount());
+        newTransfer.setFromUser(fromUser);
+        newTransfer.setToUser(toUser);
+        newTransfer.setAmount(newTransferDTO.getAmount());
 
         String sqlBalanceCheck = "select balance from account where user_id = ?;";
         String sql = "Insert into transfer (transfer_type, from_user_id, to_user_id, " +
@@ -117,27 +119,29 @@ public class JdbcTransferDao implements TransferDao {
 
 
         try {
+            Double balance = jdbcTemplate.queryForObject(sqlBalanceCheck, double.class, newTransferDTO.getUserFrom());
+            boolean sufficientFunds = balance >= newTransferDTO.getAmount();
 
 
              if (newTransferDTO.getTransferType().equals("Send")) {
-                Double balance = jdbcTemplate.queryForObject(sqlBalanceCheck, double.class, newTransferDTO.getUserFrom());
-                boolean sufficientFunds = balance >= newTransferDTO.getAmount();
+
                  if (!sufficientFunds) {
-                     newTransfer.setStatus("Rejected");
+                     newTransfer.setTransferStatus("Rejected");
+
 
                  } else {
-                     newTransfer.setStatus("Approved");
+                     newTransfer.setTransferStatus("Approved");
                      accountDao.updateBalances(newTransfer);
                  }
 
 
             } else if (newTransferDTO.getTransferType().equals("Request")) {
-                newTransfer.setStatus("Pending");
+                newTransfer.setTransferStatus("Pending");
             }
 
 
             int newTransferId = jdbcTemplate.queryForObject(sql, int.class,  newTransfer.getTransferType(), newTransfer.getFromUserId(),
-                    newTransfer.getToUserId(), newTransfer.getTransferAmount(), newTransfer.getStatus());
+                    newTransfer.getToUserId(), newTransfer.getAmount(), newTransfer.getTransferStatus());
 
             newTransfer.setTransferId(newTransferId);
             return getTransferByTransferId(newTransferId);
@@ -155,10 +159,10 @@ public class JdbcTransferDao implements TransferDao {
 
         transfer.setTransferId(rs.getInt("transfer_id"));
         transfer.setTransferType(rs.getString("transfer_type"));
-        transfer.setFromUserId(rs.getInt("from_user_id"));
-        transfer.setToUserId(rs.getInt("to_user_id"));
-        transfer.setTransferAmount(rs.getDouble("amount"));
-        transfer.setStatus(rs.getString("transfer_status"));
+        transfer.setFromUser(userDao.getUserById(rs.getInt("from_user")));
+        transfer.setToUser(userDao.getUserById(rs.getInt("to_user")));
+        transfer.setAmount(rs.getDouble("amount"));
+        transfer.setTransferStatus(rs.getString("transfer_status"));
 
         return transfer;
     }

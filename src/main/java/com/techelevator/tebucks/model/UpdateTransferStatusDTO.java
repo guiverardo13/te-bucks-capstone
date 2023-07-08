@@ -5,22 +5,22 @@ import javax.validation.constraints.AssertTrue;
 
 public class UpdateTransferStatusDTO {
 
-    String transferStatus;
+    private String  transferStatus;
 
-    @AssertTrue
-    private boolean validType () {
-        return transferStatus.equals("Rejected") || transferStatus.equals("Approved");
-    }
+    //@AssertTrue
+    //private boolean validType () {
+    //    return transferStatus.equals("Approved") || transferStatus.equals("Rejected");
+    //}
 
-    public UpdateTransferStatusDTO(String transferStatus) {
-        this.transferStatus = transferStatus;
-    }
+    //public UpdateTransferStatusDTO(String transferStatus) {
+    //    this.transferStatus = transferStatus;
+    //}
 
-    public String getTransferStatus() {
+    public String gettransferStatus() {
         return transferStatus;
     }
 
-    public void setTransferStatus(String transferStatus) {
+    public void settransferStatus(String transferStatus) {
         this.transferStatus = transferStatus;
     }
 }
