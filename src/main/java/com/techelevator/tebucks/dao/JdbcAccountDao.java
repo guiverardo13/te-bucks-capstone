@@ -3,9 +3,7 @@ package com.techelevator.tebucks.dao;
 import com.techelevator.tebucks.exception.DaoException;
 import com.techelevator.tebucks.model.Account;
 import com.techelevator.tebucks.model.Transfer;
-import com.techelevator.tebucks.model.Users;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -64,7 +62,7 @@ public class JdbcAccountDao implements AccountDao{
     //Added updateBalances method
     @Override
     public Account updateBalances(Transfer transferToUpdate) {
-        double amountToUpdate = transferToUpdate.getTransferAmount();
+        double amountToUpdate = transferToUpdate.getAmount();
         int toId = transferToUpdate.getToUserId();
         int fromId = transferToUpdate.getFromUserId();
 

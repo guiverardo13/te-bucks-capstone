@@ -1,5 +1,10 @@
 package com.techelevator.tebucks.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.techelevator.tebucks.security.model.User;
+
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotNull;
 
@@ -10,13 +15,35 @@ public class Transfer {
     @NotNull
     private String transferType;
     @NotNull
-    private int fromUserId;
+    @JsonProperty("userFrom")
+    @JsonAlias("userFrom")
+    private User userFrom;
     @NotNull
-    private int toUserId;
+    @JsonProperty("userTo")
+    @JsonAlias("userTo")
+    private User userTo;
     @NotNull
-    private double transferAmount;
+    private double amount;
     @NotNull
-    private String status;
+    private String transferStatus;
+
+    @JsonIgnore
+    public int getFromUserId () {
+        if ( userFrom == null) {
+            return 0;
+        } else {
+            return userFrom.getId();
+        }
+
+    }
+    @JsonIgnore
+    public int getToUserId () {
+        if (userTo == null) {
+            return 0;
+        } else {
+            return userTo.getId();
+        }
+    }
 
     @AssertTrue
     private boolean validType(){
@@ -25,22 +52,22 @@ public class Transfer {
 
     @AssertTrue
     private boolean validTransfer(){
-        return fromUserId != toUserId;
+        return userFrom.getId() != userTo.getId();
     }
     @AssertTrue
     private boolean validStatus(){
-        return status.equals("Pending") || status.equals("Approved") || status.equals("Rejected");
+        return transferStatus.equals("Pending") || transferStatus.equals("Approved") || transferStatus.equals("Rejected");
     }
     public Transfer(){
 
     }
-    public Transfer(int transferId, String transferType, int fromUserId, int toUserId, double transferAmount, String status) {
+    public Transfer(int transferId, String transferType, User userFrom, User userTo, double transferAmount, String transferStatus) {
         this.transferId = transferId;
         this.transferType = transferType;
-        this.fromUserId = fromUserId;
-        this.toUserId = toUserId;
-        this.transferAmount = transferAmount;
-        this.status = status;
+        this.userFrom = userFrom;
+        this.userTo = userTo;
+        this.amount = transferAmount;
+        this.transferStatus = transferStatus;
     }
 
     public int getTransferId() {
@@ -51,20 +78,20 @@ public class Transfer {
         return transferType;
     }
 
-    public int getFromUserId() {
-        return fromUserId;
+    public User getUserFrom() {
+        return userFrom;
     }
 
-    public int getToUserId() {
-        return toUserId;
+    public User getUserTo() {
+        return userTo;
     }
 
-    public double getTransferAmount() {
-        return transferAmount;
+    public double getAmount() {
+        return amount;
     }
 
-    public String getStatus() {
-        return status;
+    public String getTransferStatus() {
+        return transferStatus;
     }
 
     public void setTransferId(int transferId) {
@@ -75,19 +102,19 @@ public class Transfer {
         this.transferType = transferType;
     }
 
-    public void setFromUserId(int fromUserId) {
-        this.fromUserId = fromUserId;
+    public void setFromUser(User userFrom) {
+        this.userFrom = userFrom;
     }
 
-    public void setToUserId(int toUserId) {
-        this.toUserId = toUserId;
+    public void setToUser(User userTo) {
+        this.userTo= userTo;
     }
 
-    public void setTransferAmount(double transferAmount) {
-        this.transferAmount = transferAmount;
+    public void setAmount(double amount) {
+        this.amount = amount;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setTransferStatus(String transferStatus) {
+        this.transferStatus = transferStatus;
     }
 }

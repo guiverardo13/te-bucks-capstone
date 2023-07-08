@@ -10,7 +10,7 @@ public interface TransferDao {
 
     Transfer getTransferByTransferId(int transferId);
 
-    List <Transfer> getTransfersByUserId(int userId, Principal principal);
+    List <Transfer> getTransfers(int userId);
 
     Transfer updateTransferStatus (Transfer transferToUpdate, String status);
 
