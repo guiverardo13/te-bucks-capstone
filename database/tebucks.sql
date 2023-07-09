@@ -1,6 +1,6 @@
 BEGIN TRANSACTION;
 
-DROP TABLE IF EXISTS users, transfer, account;
+DROP TABLE IF EXISTS users, transfer, account, logger_exceptions;
 
 CREATE TABLE users (
 	user_id serial NOT NULL,
@@ -36,6 +36,18 @@ CREATE TABLE account (
 	balance decimal NOT NULL,
 	CONSTRAINT pk_user_id PRIMARY KEY (user_id),
 	CONSTRAINT fk_user_id FOREIGN KEY (user_id) references users(user_id)
+
+);
+
+CREATE TABLE logger_exceptions (
+	exception_id serial not null,
+	exception_date varchar(50) not null,
+	description varchar(100) not null,
+	from_user varchar(50) not null,
+	to_user varchar(50) not null,
+	amount decimal not null,
+
+	constraint pk_exception_id primary key (exception_id)
 
 );
 

@@ -1,10 +1,12 @@
 package com.techelevator.tebucks.dao;
 
 import com.techelevator.tebucks.exception.DaoException;
-import com.techelevator.tebucks.model.Transfer;
-import com.techelevator.tebucks.model.TransferDTO;
+import com.techelevator.tebucks.model.*;
 import com.techelevator.tebucks.security.dao.JdbcUserDao;
+import com.techelevator.tebucks.security.model.LoginDto;
 import com.techelevator.tebucks.security.model.User;
+import com.techelevator.tebucks.services.AuthenticationService;
+import com.techelevator.tebucks.services.LoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
@@ -24,6 +26,10 @@ public class JdbcTransferDao implements TransferDao {
     private JdbcAccountDao accountDao;
     @Autowired
     private JdbcUserDao userDao;
+    @Autowired
+    private LoggerService loggerService;
+    @Autowired
+    private AuthenticationService authenticationService;
 
 
 
@@ -91,25 +97,42 @@ public class JdbcTransferDao implements TransferDao {
         }
 
         if (updatedTransfer.getTransferStatus().equals("Approved")) {
+
+            if (transferToUpdate.getAmount() >= 1_000) {
+                TxLogDTO txLogDTO = new TxLogDTO();
+                txLogDTO.setUsernameFrom(updatedTransfer.getUserFrom().getUsername());
+                txLogDTO.setUsernameTo(updatedTransfer.getUserTo().getUsername());
+                txLogDTO.setAmount(updatedTransfer.getAmount());
+                txLogDTO.setDescription("Transfer ID: " + Integer.toString(updatedTransfer.getTransferId()) + "; Status: " + updatedTransfer.getTransferStatus());
+                loggerService.logTransaction(txLogDTO);
+
+            }
+
             accountDao.updateBalances(transferToUpdate);
         }
+
 
         return updatedTransfer;
     }
 
-    // added update Balances method
+
     @Override
     public Transfer createTransfer (TransferDTO newTransferDTO) {
 
         User fromUser = userDao.getUserById(newTransferDTO.getUserFrom());
         User toUser = userDao.getUserById(newTransferDTO.getUserTo());
 
-
         Transfer newTransfer = new Transfer();
         newTransfer.setTransferType(newTransferDTO.getTransferType());
         newTransfer.setFromUser(fromUser);
         newTransfer.setToUser(toUser);
         newTransfer.setAmount(newTransferDTO.getAmount());
+
+        TxLogDTO txLogDTO = new TxLogDTO();
+        txLogDTO.setUsernameFrom(newTransfer.getUserFrom().getUsername());
+        txLogDTO.setUsernameTo(newTransfer.getUserTo().getUsername());
+        txLogDTO.setAmount(newTransfer.getAmount());
+
 
         String sqlBalanceCheck = "select balance from account where user_id = ?;";
         String sql = "Insert into transfer (transfer_type, from_user_id, to_user_id, " +
@@ -125,17 +148,24 @@ public class JdbcTransferDao implements TransferDao {
              if (newTransferDTO.getTransferType().equals("Send")) {
 
                  if (!sufficientFunds) {
-                     //newTransfer.setTransferStatus("Rejected");
+                     newTransfer.setTransferStatus("Rejected");
+                     txLogDTO.setDescription("Transfer ID: " + Integer.toString(newTransfer.getTransferId()) + "; Status: " + newTransfer.getTransferStatus());
+                     loggerService.logTransaction(txLogDTO);
+
                      throw new DaoException("Insufficient Funds.");
 
 
                  } else {
                      newTransfer.setTransferStatus("Approved");
+
+                     if (newTransfer.getAmount() >= 1_000) {
+                         txLogDTO.setDescription("Transfer ID: " + Integer.toString(newTransfer.getTransferId()) + "; Status: " + newTransfer.getTransferStatus());
+                         loggerService.logTransaction(txLogDTO);
+                     }
+
                      accountDao.updateBalances(newTransfer);
                  }
-
-
-            } else if (newTransferDTO.getTransferType().equals("Request")) {
+             } else if (newTransferDTO.getTransferType().equals("Request")) {
                 newTransfer.setTransferStatus("Pending");
             }
 
