@@ -1,9 +1,11 @@
 package com.techelevator.tebucks.services;
 
+import com.techelevator.tebucks.dao.JdbcErrorLogDao;
 import com.techelevator.tebucks.model.TearsLoginUser;
 import com.techelevator.tebucks.model.ReturnUser;
 import com.techelevator.tebucks.model.TxLog;
 import com.techelevator.tebucks.model.TxLogDTO;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,7 +23,8 @@ public class LoggerService {
     private final RestTemplate restTemplate = new RestTemplate();
     private AuthenticationService authenticationService = new AuthenticationService();
     private static final TearsLoginUser LOGIN_USER = new TearsLoginUser("Team<01>", "password");
-
+    @Autowired
+    private JdbcErrorLogDao jdbcErrorLogDao;
 
     public TxLog logTransaction (TxLogDTO txLogDTO) {
         ReturnUser authenticatedUser = authenticationService.login(LOGIN_USER);
@@ -35,14 +38,10 @@ public class LoggerService {
             return restTemplate.postForObject(API_BASE_URL + "api/TxLog", entity, TxLog.class);
 
         } catch (RestClientResponseException e) {
-            throw new RestClientException(Objects.requireNonNull(e.getMessage()));
-            //Create Logger Exception Model, DAO, and JdbcDao to logg the DTO + e.get status, e.get message
+
+            txLogDTO.setDescription(e.getMessage());
+            jdbcErrorLogDao.createLoggerExceptionLog(txLogDTO);
         }
-
-
-
-
-
-
+        return null;
     }
 }

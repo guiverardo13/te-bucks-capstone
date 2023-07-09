@@ -95,9 +95,9 @@ public class JdbcTransferDao implements TransferDao {
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
         }
-            // ********************   3     ***************************
+
         if (updatedTransfer.getTransferStatus().equals("Approved")) {
-            //log transaction if updatedTransfer.getamount > = 1000
+
             if (transferToUpdate.getAmount() >= 1_000) {
                 TxLogDTO txLogDTO = new TxLogDTO();
                 txLogDTO.setUsernameFrom(updatedTransfer.getUserFrom().getUsername());
@@ -146,7 +146,7 @@ public class JdbcTransferDao implements TransferDao {
 
 
              if (newTransferDTO.getTransferType().equals("Send")) {
-                // ************** 2 ****************
+
                  if (!sufficientFunds) {
                      newTransfer.setTransferStatus("Rejected");
                      txLogDTO.setDescription("Transfer ID: " + Integer.toString(newTransfer.getTransferId()) + "; Status: " + newTransfer.getTransferStatus());
@@ -154,7 +154,7 @@ public class JdbcTransferDao implements TransferDao {
 
                      throw new DaoException("Insufficient Funds.");
 
-                    // ****************** 1 *********************
+
                  } else {
                      newTransfer.setTransferStatus("Approved");
 
