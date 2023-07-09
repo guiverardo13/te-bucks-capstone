@@ -4,11 +4,10 @@ import com.techelevator.tebucks.dao.JdbcAccountDao;
 import com.techelevator.tebucks.dao.JdbcTransferDao;
 
 import com.techelevator.tebucks.exception.DaoException;
-import com.techelevator.tebucks.model.Transfer;
-import com.techelevator.tebucks.model.TransferDTO;
-import com.techelevator.tebucks.model.UpdateTransferStatusDTO;
+import com.techelevator.tebucks.model.*;
 import com.techelevator.tebucks.security.dao.JdbcUserDao;
 import com.techelevator.tebucks.security.model.User;
+import com.techelevator.tebucks.services.LoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,6 +29,8 @@ public class TransferController {
     private JdbcUserDao userDao;
     @Autowired
     private JdbcAccountDao accountDao;
+    //@Autowired
+    private LoggerService loggerService;
 
 
     @RequestMapping(path = "/account/transfers", method = RequestMethod.GET)
@@ -69,11 +70,6 @@ public class TransferController {
         } else {
             transferDTO.setUserFrom(usersLoggedIn.getId());
         }
-
-
-
-
-
 
         return transferDao.createTransfer(transferDTO);
     }
