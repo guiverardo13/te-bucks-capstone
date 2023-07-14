@@ -45,6 +45,7 @@ public class Transfer {
         }
     }
 
+    // need is
     @AssertTrue
     private boolean validType(){
         return transferType.equals("Send") || transferType.equals("Request");

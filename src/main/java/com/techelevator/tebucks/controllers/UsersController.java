@@ -22,7 +22,7 @@ public class UsersController {
     private JdbcUserDao userDao;
 
 
-    @PreAuthorize("permitAll")
+
     @RequestMapping(path = "/users", method = RequestMethod.GET)
     public List<User> getAllUsers(Principal principal){
         return userDao.getUsers(principal);
